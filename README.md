@@ -2,7 +2,7 @@ Floppy Bird DDS
 =========
 With this fork I'm adding some dynamic difficulty scaling to the original Floppy Bird.
 This is used for a thesis project to get insight in players responses to dynamic difficulty in a game like this.
-I will add the results of the polls in here later on
+I will add the results of the polls in here later on.
 
 License
 =====
