@@ -35,6 +35,10 @@ var flyArea = $("#flyarea").height();
 var score = 0;
 var highscore = 0;
 
+var difficulty = 1; // difficulty rating from 0.0 to 1.0
+var pipeheights = []; // stores the last heights to compare even when height is changing
+var nextheight = 0;
+
 var pipeheight = 90;
 var pipewidth = 52;
 var pipes = new Array();
@@ -209,14 +213,16 @@ function gameloop() {
    var pipetop = nextpipeupper.offset().top + nextpipeupper.height();
    var pipeleft = nextpipeupper.offset().left - 2; // for some reason it starts at the inner pipes offset, not the outer pipes.
    var piperight = pipeleft + pipewidth;
-   var pipebottom = pipetop + pipeheight;
+   var pipebottom = pipetop + nextheight;
+   
+   console.log(nextheight);
    
    if(debugmode)
    {
       var boundingbox = $("#pipebox");
       boundingbox.css('left', pipeleft);
       boundingbox.css('top', pipetop);
-      boundingbox.css('height', pipeheight);
+      boundingbox.css('height', nextheight);
       boundingbox.css('width', pipewidth);
    }
    
@@ -345,12 +351,28 @@ function setMedal()
    return true;
 }
 
+function adaptDifficulty(){
+	if(highscore != 0)
+	{
+		difficulty = score/highscore;
+		if (difficulty>1)
+			difficulty=1;
+	}
+	pipeheight = 150-60*difficulty;
+}
+
 function playerDead()
 {
    //stop animating everything!
    $(".animated").css('animation-play-state', 'paused');
    $(".animated").css('-webkit-animation-play-state', 'paused');
    
+   //reset difficulty and heights for next run
+   difficulty = 0;
+   nextheight = 0;
+   pipeheights = [];
+   
+  
    //drop the bird to the floor
    var playerbottom = $("#player").position().top + $("#player").width(); //we use width because he'll be rotated 90 deg
    var floor = flyArea;
@@ -452,6 +474,7 @@ $("#replay").click(function() {
 
 function playerScore()
 {
+   nextheight = pipeheights.shift();
    score += 1;
    //play score sound
    soundScore.stop();
@@ -464,8 +487,20 @@ function updatePipes()
    //Do any pipes need removal?
    $(".pipe").filter(function() { return $(this).position().left <= -100; }).remove()
    
+   // change difficulty depending on score
+   adaptDifficulty();
+   
+   // if this is the first pipe set the first height
+   if(nextheight == 0) {
+	   nextheight = pipeheight;
+	   console.log("pipeheight: "+pipeheight+"       nextheight: "+nextheight)
+   }
+   
+   // add current pipeheight to the height array
+   pipeheights.push(pipeheight);
+   
    //add a new pipe (top height + bottom height  + pipeheight == flyArea) and put it in our tracker
-   var padding = 80;
+   var padding = 80-(30*difficulty); // adjust the padding according to difficulty to make differences larger
    var constraint = flyArea - pipeheight - (padding * 2); //double padding (for top and bottom)
    var topheight = Math.floor((Math.random()*constraint) + padding); //add lower padding
    var bottomheight = (flyArea - pipeheight) - topheight;
